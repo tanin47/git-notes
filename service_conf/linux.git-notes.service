@@ -1,0 +1,14 @@
+[Unit]
+Description=Git notes
+
+[Service]
+Type=simple
+ExecStart=/home/tanin/projects/git-notes/git-notes /home/tanin/projects/git-notes/git-notes.json
+Restart=on-failure
+RestartSec=30
+StartLimitInterval=350
+StartLimitBurst=10
+
+[Install]
+Alias=git-notes.service
+WantedBy=multi-user.target

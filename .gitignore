@@ -1,0 +1,10 @@
+*.exe
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+.glide/
+/.idea
+/git-notes
+/git-notes.json
