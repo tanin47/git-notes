@@ -107,27 +107,71 @@ func writeFile(t *testing.T, repoPath string, filePath string, content string) {
 	assert.NoError(t, ioutil.WriteFile(fullPath, []byte(content), 0644))
 }
 
-func TestGoGit_UpdateRename(t *testing.T) {
+func TestParseStatusBranch_NoRemote(t *testing.T) {
+	state, err := ParseStatusBranch("## master")
+	assert.NoError(t, err)
+	assert.Equal(t, Ahead, state)
+}
+
+func TestParseStatusBranch_Sync(t *testing.T) {
+	state, err := ParseStatusBranch("## master...origin/master")
+	assert.NoError(t, err)
+	assert.Equal(t, Sync, state)
+}
+
+func TestParseStatusBranch_Ahead(t *testing.T) {
+	state, err := ParseStatusBranch("## master...origin/master [ahead 1]")
+	assert.NoError(t, err)
+	assert.Equal(t, Ahead, state)
+}
+
+func TestParseStatusBranch_OutOfSync(t *testing.T) {
+	state, err := ParseStatusBranch("## master...origin/master [behind 99]")
+	assert.NoError(t, err)
+	assert.Equal(t, OutOfSync, state)
+}
+
+func TestParseStatusBranch_OutOfSync2(t *testing.T) {
+	state, err := ParseStatusBranch("## master...origin/master [ahead 8, behind 99]")
+	assert.NoError(t, err)
+	assert.Equal(t, OutOfSync, state)
+}
+
+func TestGoGit_Rename(t *testing.T) {
 	repos := setupRepos()
-	//defer cleanupRepos(repos)
+	defer cleanupRepos(repos)
 
 	writeFile(t, repos.localPath, "test_name", "TestContent")
 
 	assertState(t, repos.localPath, Dirty)
-	performUpdate(t, repos.localPath)
-	assertState(t, repos.localPath, Ahead)
+	performSync(t, repos.localPath)
+	assertState(t, repos.localPath, Sync)
 
 	assert.NoError(t, os.Rename(fmt.Sprintf("%s/%s", repos.localPath, "test_name"), fmt.Sprintf("%s/%s", repos.localPath, "TEST_NAME")))
 
 	assertState(t, repos.localPath, Dirty)
 	performUpdate(t, repos.localPath)
-	assertState(t, repos.localPath, OutOfSync)
-
-	assertState(t, repos.localPath, OutOfSync)
-	assertState(t, repos.localPath, OutOfSync)
+	assertState(t, repos.localPath, Ahead)
 }
 
-func TestGoGit_UpdateModify(t *testing.T) {
+func TestGoGit_Copy(t *testing.T) {
+	repos := setupRepos()
+	defer cleanupRepos(repos)
+
+	writeFile(t, repos.localPath, "test.md", "TestContent")
+
+	assertState(t, repos.localPath, Dirty)
+	performSync(t, repos.localPath)
+	assertState(t, repos.localPath, Sync)
+
+	writeFile(t, repos.localPath, "copied.md", "TestContent")
+
+	assertState(t, repos.localPath, Dirty)
+	performUpdate(t, repos.localPath)
+	assertState(t, repos.localPath, Ahead)
+}
+
+func TestGoGit_Modify(t *testing.T) {
 	repos := setupRepos()
 	defer cleanupRepos(repos)
 
@@ -141,7 +185,24 @@ func TestGoGit_UpdateModify(t *testing.T) {
 
 	assertState(t, repos.localPath, Dirty)
 	performUpdate(t, repos.localPath)
-	assertState(t, repos.localPath, OutOfSync)
+	assertState(t, repos.localPath, Ahead)
+}
+
+func TestGoGit_Deletion(t *testing.T) {
+	repos := setupRepos()
+	defer cleanupRepos(repos)
+
+	writeFile(t, repos.localPath, "test.md", "TestContent")
+
+	assertState(t, repos.localPath, Dirty)
+	performSync(t, repos.localPath)
+	assertState(t, repos.localPath, Sync)
+
+	assert.NoError(t, os.Remove(fmt.Sprintf("%s/%s", repos.localPath, "test.md")))
+
+	assertState(t, repos.localPath, Dirty)
+	performUpdate(t, repos.localPath)
+	assertState(t, repos.localPath, Ahead)
 }
 
 func TestGoGit_UpdateDirty(t *testing.T) {
