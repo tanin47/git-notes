@@ -16,7 +16,6 @@ import (
 const (
 	Error State = "error"
 	Dirty  State = "dirty"
-	Staged    State = "staged"
 	Ahead     State = "ahead"
 	OutOfSync State = "out-of-sync"
 	Sync      State = "sync"
@@ -90,21 +89,10 @@ func (g *GoGit) GetState(path string) (State, error) {
 		return Error, fmt.Errorf("unable to get the status. Error: %v", err)
 	}
 
-	var isDirty = false
-	var containStaged = false
+	log.Println(status)
 
-	for file, s := range status {
-		if s.Worktree != ' ' {
-			isDirty = true
-		}
-		containStaged = true
-		log.Println(file, string(s.Worktree), string(s.Staging), s.Extra)
-	}
-
-	if isDirty {
+	if len(status) > 0 {
 		return Dirty, nil
-	} else if containStaged {
-		return Staged, nil
 	} else {
 		state, err := GetStateAgainstRemote(*repo, *current)
 		if err != nil {
@@ -178,9 +166,7 @@ func (g *GoGit) Update(path string) error {
 	switch state {
 	case Error:
 	case Dirty:
-		err = Add(path)
-	case Staged:
-		err = Commit(path)
+		err = AddAndCommit(path)
 	case Ahead:
 		err = Push(path)
 	case OutOfSync:
@@ -189,6 +175,14 @@ func (g *GoGit) Update(path string) error {
 	}
 
 	return err
+}
+
+func AddAndCommit(path string) error {
+	err := Add(path)
+	if err != nil {
+		return err
+	}
+	return Commit(path)
 }
 
 func Merge(path string) error {

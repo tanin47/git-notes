@@ -9,6 +9,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"strings"
 	"testing"
 )
 
@@ -48,7 +49,7 @@ func setupRepos() repos {
 		log.Fatalf("Unable to setup origin")
 	}
 
-	fmt.Printf("local: %s, remote: %s", localPath, remotePath)
+	log.Printf("local: %s, remote: %s", localPath, remotePath)
 	return repos{
 		remotePath: remotePath,
 		remote: *remote,
@@ -73,6 +74,7 @@ func assertState(t *testing.T, path string, expectedState State) {
 	gogit := GoGit{}
 	state, err := gogit.GetState(path)
 	assert.NoError(t, err)
+	log.Printf("State: %v", state)
 	assert.Equal(t, expectedState, state)
 }
 
@@ -89,6 +91,7 @@ func performSync(t *testing.T, path string) {
 }
 
 func performCmd(t *testing.T, path string, cmd string, args... string) {
+	log.Printf("Run cmd: %v", strings.Join(append([]string{cmd}, args...), " "))
 	c := exec.Command(cmd, args...)
 	c.Dir = path
 	c.Stdin = os.Stdin
@@ -100,7 +103,45 @@ func performCmd(t *testing.T, path string, cmd string, args... string) {
 
 func writeFile(t *testing.T, repoPath string, filePath string, content string) {
 	fullPath := fmt.Sprintf("%s/%s", repoPath, filePath)
+	log.Printf("Write file: %v, content: %v", fullPath, content)
 	assert.NoError(t, ioutil.WriteFile(fullPath, []byte(content), 0644))
+}
+
+func TestGoGit_UpdateRename(t *testing.T) {
+	repos := setupRepos()
+	//defer cleanupRepos(repos)
+
+	writeFile(t, repos.localPath, "test_name", "TestContent")
+
+	assertState(t, repos.localPath, Dirty)
+	performUpdate(t, repos.localPath)
+	assertState(t, repos.localPath, Ahead)
+
+	assert.NoError(t, os.Rename(fmt.Sprintf("%s/%s", repos.localPath, "test_name"), fmt.Sprintf("%s/%s", repos.localPath, "TEST_NAME")))
+
+	assertState(t, repos.localPath, Dirty)
+	performUpdate(t, repos.localPath)
+	assertState(t, repos.localPath, OutOfSync)
+
+	assertState(t, repos.localPath, OutOfSync)
+	assertState(t, repos.localPath, OutOfSync)
+}
+
+func TestGoGit_UpdateModify(t *testing.T) {
+	repos := setupRepos()
+	defer cleanupRepos(repos)
+
+	writeFile(t, repos.localPath, "test.md", "TestContent")
+
+	assertState(t, repos.localPath, Dirty)
+	performSync(t, repos.localPath)
+	assertState(t, repos.localPath, Sync)
+
+	writeFile(t, repos.localPath, "test.md", "TestContent2")
+
+	assertState(t, repos.localPath, Dirty)
+	performUpdate(t, repos.localPath)
+	assertState(t, repos.localPath, OutOfSync)
 }
 
 func TestGoGit_UpdateDirty(t *testing.T) {
@@ -110,18 +151,6 @@ func TestGoGit_UpdateDirty(t *testing.T) {
 	writeFile(t, repos.localPath, "test.md", "TestContent")
 
 	assertState(t, repos.localPath, Dirty)
-	performUpdate(t, repos.localPath)
-	assertState(t, repos.localPath, Staged)
-}
-
-func TestGoGit_UpdateStaged(t *testing.T) {
-	repos := setupRepos()
-	defer cleanupRepos(repos)
-
-	writeFile(t, repos.localPath, "test.md", "TestContent")
-	performCmd(t, repos.localPath, "git", "add", "--all")
-
-	assertState(t, repos.localPath, Staged)
 	performUpdate(t, repos.localPath)
 	assertState(t, repos.localPath, Ahead)
 }
@@ -173,7 +202,7 @@ func TestGoGit_UpdateOutOfSync(t *testing.T) {
 
 func TestGoGit_UpdateFixConflict(t *testing.T) {
 	repos := setupRepos()
-	defer cleanupRepos(repos)
+	//defer cleanupRepos(repos)
 
 	writeFile(t, repos.localPath, "test.md", "TestContent")
 	performCmd(t, repos.localPath, "git", "add", "--all")
@@ -194,8 +223,6 @@ func TestGoGit_UpdateFixConflict(t *testing.T) {
 	performUpdate(t, repos.localPath)
 	assertState(t, repos.localPath, Dirty)
 	performUpdate(t, repos.localPath)
-	assertState(t, repos.localPath, Staged)
-	performUpdate(t, repos.localPath)
 	assertState(t, repos.localPath, Ahead)
 	performUpdate(t, repos.localPath)
 	assertState(t, repos.localPath, Sync)
@@ -208,18 +235,6 @@ func TestGoGit_SyncDirty(t *testing.T) {
 	writeFile(t, repos.localPath, "test.md", "TestContent")
 
 	assertState(t, repos.localPath, Dirty)
-	performSync(t, repos.localPath)
-	assertState(t, repos.localPath, Sync)
-}
-
-func TestGoGit_SyncStaged(t *testing.T) {
-	repos := setupRepos()
-	defer cleanupRepos(repos)
-
-	writeFile(t, repos.localPath, "test.md", "TestContent")
-	performCmd(t, repos.localPath, "git", "add", "--all")
-
-	assertState(t, repos.localPath, Staged)
 	performSync(t, repos.localPath)
 	assertState(t, repos.localPath, Sync)
 }
