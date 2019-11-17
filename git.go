@@ -2,13 +2,10 @@ package main
 
 import (
 	"fmt"
-	"gopkg.in/src-d/go-git.v4"
-	"gopkg.in/src-d/go-git.v4/config"
-	"gopkg.in/src-d/go-git.v4/plumbing"
-	"gopkg.in/src-d/go-git.v4/plumbing/transport"
 	"log"
 	"os"
 	"os/exec"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -16,7 +13,6 @@ import (
 const (
 	Error State = "error"
 	Dirty  State = "dirty"
-	Staged    State = "staged"
 	Ahead     State = "ahead"
 	OutOfSync State = "out-of-sync"
 	Sync      State = "sync"
@@ -25,26 +21,13 @@ const (
 type State string
 
 type Git interface {
+	IsDirty(path string) (bool, error)
 	GetState(path string) (State, error)
 	Sync(path string) error
 	Update(path string) error
 }
 
 type GoGit struct {
-}
-
-func GetRepoAndWorktree(path string) (*git.Repository, *git.Worktree, error) {
-	repo, err := git.PlainOpen(path)
-	if err != nil {
-		return nil, nil, fmt.Errorf("unable to open %s. Error: %v", path, err)
-	}
-
-	current, err := repo.Worktree()
-	if err != nil {
-		return nil, nil, fmt.Errorf("unable to get the current working tree. Error: %v", err)
-	}
-
-	return repo, current, nil
 }
 
 func (g *GoGit) Sync(path string) error {
@@ -77,36 +60,35 @@ func (g *GoGit) Sync(path string) error {
 	}
 }
 
+func runCmd(path string, command string, args... string) (string, error) {
+	cmd := exec.Command(command, args...)
+	cmd.Dir = path
+
+	out, err := cmd.CombinedOutput()
+	return string(out), err
+}
+
+func (g *GoGit) IsDirty(path string) (bool, error) {
+	out, err := runCmd(path, "git", "status", "--porcelain")
+	if err != nil {
+		return false, fmt.Errorf("unable to get status. Error: %v", err)
+	}
+
+	dirty := strings.TrimSpace(string(out)) != ""
+	return dirty, nil
+}
+
 func (g *GoGit) GetState(path string) (State, error) {
 	log.Printf("Computing the state of %s", path)
 
-	repo, current, err := GetRepoAndWorktree(path)
+	dirty, err := g.IsDirty(path)
 	if err != nil {
-		return Error, fmt.Errorf("unable to get the repo and worktree. Error: %v", err)
+		return Error, fmt.Errorf("unable to get status. Error: %v", err)
 	}
-
-	status, err := current.Status()
-	if err != nil {
-		return Error, fmt.Errorf("unable to get the status. Error: %v", err)
-	}
-
-	var isDirty = false
-	var containStaged = false
-
-	for file, s := range status {
-		if s.Worktree != ' ' {
-			isDirty = true
-		}
-		containStaged = true
-		log.Println(file, string(s.Worktree), string(s.Staging), s.Extra)
-	}
-
-	if isDirty {
+	if dirty {
 		return Dirty, nil
-	} else if containStaged {
-		return Staged, nil
 	} else {
-		state, err := GetStateAgainstRemote(*repo, *current)
+		state, err := GetStateAgainstRemote(path)
 		if err != nil {
 			return Error, err
 		}
@@ -114,58 +96,61 @@ func (g *GoGit) GetState(path string) (State, error) {
 	}
 }
 
-func GetStateAgainstRemote(repo git.Repository, current git.Worktree) (State, error) {
-	err := repo.Fetch(&git.FetchOptions{
-		RemoteName: "origin",
-		RefSpecs:   []config.RefSpec{"refs/heads/master:refs/remotes/origin/master"},
-	})
+func ParseStatusBranch(status string) (State, error) {
+	// 5 variants of status branch
+	// ## master
+	// ## master...origin/master
+	// ## master...origin/master [ahead 1]
+	// ## master...origin/master [behind 1]
+	// ## master...origin/master [ahead 1, behind 1]
 
-	if err != nil {
-		if err == transport.ErrEmptyRemoteRepository || strings.Contains(err.Error(), "couldn't find remote ref") {
-			return Ahead, nil
-		} else if err == git.NoErrAlreadyUpToDate || strings.Contains(err.Error(), "reference not found"){
-			// Do nothing
-		} else {
-			return Error, fmt.Errorf("unable to fetch. Error: %v", err)
-		}
-	}
+	reg := regexp.MustCompile("## master(\\.\\.\\.origin\\/master *(\\[(ahead|behind) *[0-9]+ *(, *behind *[0-9]+)? *])?)?")
+	matches := reg.FindAllStringSubmatch(status, -1)
 
-	remoteRef, err := repo.Reference("refs/remotes/origin/master", true)
-	if err != nil {
-		return Error, fmt.Errorf("unable to get the remote reference refs/remotes/origin/master. Error: %v", err)
-	}
-	remoteCommit, err := repo.CommitObject(remoteRef.Hash())
-	if err != nil {
-		return Error, fmt.Errorf("unable to get the commit %s, which corresponds to remotes/origin/master. Error: %v", remoteRef.Hash().String(), err)
+	groups := matches[0]
+	if groups[0] == "" {
+		return Error, fmt.Errorf("unable to parse status: %v", status)
 	}
 
-	localCommitIter, err := repo.Log(&git.LogOptions{
-		From:     plumbing.Hash{},
-		Order:    0,
-		FileName: nil,
-		All:      false,
-	})
-	if err != nil {
-		return Error, fmt.Errorf("unable to get the list of local commits. Error: %v", err)
+	// ## master
+	if groups[1] == "" {
+		return Ahead, nil
 	}
-	localCommit, err := localCommitIter.Next()
-	if err != nil {
-		return Error, fmt.Errorf("unable to get the latest local commit. Error: %v", err)
-	}
-	if remoteCommit.Hash == localCommit.Hash {
+
+	// ## master...origin/master
+	if groups[2] == "" {
 		return Sync, nil
-	} else {
-		isAncestor, err := remoteCommit.IsAncestor(localCommit)
-		if err != nil {
-			return Error, fmt.Errorf("unable to check if the remote commit is the ancestor of the local commit. Error: %v", err)
-		}
+	}
 
-		if isAncestor {
+	// ## master...origin/master
+	if groups[3] == "behind" {
+		return OutOfSync, nil
+	}
+
+	// ## master...origin/master
+	if groups[3] == "ahead" {
+		if groups[4] == "" {
 			return Ahead, nil
 		} else {
 			return OutOfSync, nil
 		}
 	}
+
+	return Error, fmt.Errorf("unable to parse status: %v", status)
+}
+
+func GetStateAgainstRemote(path string) (State, error) {
+	_, err := runCmd(path, "git", "fetch")
+	if err != nil {
+		return Error, fmt.Errorf("unable to fetch. Error: %v", err)
+	}
+
+	status, err := runCmd(path, "git", "status", "--branch", "--porcelain")
+	if err != nil {
+		return Error, fmt.Errorf("unable to fetch. Error: %v", err)
+	}
+
+	return ParseStatusBranch(status)
 }
 
 func (g *GoGit) Update(path string) error {
@@ -178,9 +163,7 @@ func (g *GoGit) Update(path string) error {
 	switch state {
 	case Error:
 	case Dirty:
-		err = Add(path)
-	case Staged:
-		err = Commit(path)
+		err = AddAndCommit(path)
 	case Ahead:
 		err = Push(path)
 	case OutOfSync:
@@ -189,6 +172,14 @@ func (g *GoGit) Update(path string) error {
 	}
 
 	return err
+}
+
+func AddAndCommit(path string) error {
+	err := Add(path)
+	if err != nil {
+		return err
+	}
+	return Commit(path)
 }
 
 func Merge(path string) error {
