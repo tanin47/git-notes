@@ -53,9 +53,21 @@ Develop
 Installation
 -------------
 
+1. Clone the repo
+2. Make the config file that contains the paths that will be synced automatically by Git Notes. See the example: `git-notes.json.example`
+3. Build the binary with `go build`
+
+The binary will be built as `git-notes` in the root dir. 
+
+You can run it by: `git-notes [your-config-file]`.
+
+To make Git Notes run at the startup and in the background, please follow the specific platform instruction below:
+
 ### Ubuntu
 
 Move `./service_conf/linux.git-notes.service` to `/etc/systemd/user/git-notes.service`
+
+Modify `/etc/systemd/user/git-notes.service` to use the binary that you built above with and your config file.
 
 Reload service file after moving: `systemctl --user daemon-reload`
 
@@ -63,12 +75,16 @@ Run: `systemctl --user start git-notes.service`
 
 Read logs: `journalctl -u git-notes.service --follow --user`
 
+Start after booting: `systemctl --user enable git-notes.service`
+
 
 ### Mac
 
 Move `./service_conf/mac.git-notes.plist` to `~/Library/LaunchAgents/git-notes.plist`
 
-Run:
+Modify `~/Library/LaunchAgents/git-notes.plist` to use the binary that you built above with and your config file.
+
+Run and start after booting:
 
 1. `launchctl load ~/Library/LaunchAgents/git-notes.plist`
 2. `launchctl start ~/Library/LaunchAgents/git-notes.plist`
