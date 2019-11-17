@@ -6,8 +6,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"log"
 	"os"
-	"os/exec"
-	"strings"
 	"testing"
 )
 
@@ -17,8 +15,8 @@ type repos struct {
 }
 
 func setupRepos() repos {
-	remote := test_helpers.SetupGitRepo("remote")
-	local := test_helpers.SetupGitRepo("local")
+	remote := test_helpers.SetupGitRepo("remote", true)
+	local := test_helpers.SetupGitRepo("local", false)
 
 	test_helpers.SetupRemote(local, remote)
 
@@ -58,17 +56,6 @@ func performUpdate(t *testing.T, path string) {
 func performSync(t *testing.T, path string) {
 	gogit := GitCmd{}
 	err := gogit.Sync(path)
-	assert.NoError(t, err)
-}
-
-func performCmd(t *testing.T, path string, cmd string, args... string) {
-	log.Printf("Run cmd: %v", strings.Join(append([]string{cmd}, args...), " "))
-	c := exec.Command(cmd, args...)
-	c.Dir = path
-	c.Stdin = os.Stdin
-	c.Stdout = os.Stdout
-	c.Stderr = os.Stderr
-	err := c.Run()
 	assert.NoError(t, err)
 }
 
@@ -186,8 +173,8 @@ func TestGoGit_UpdateAhead(t *testing.T) {
 	defer cleanupRepos(repos)
 
 	test_helpers.WriteFile(t, repos.local, "test.md", "TestContent")
-	performCmd(t, repos.local, "git", "add", "--all")
-	performCmd(t, repos.local, "git", "commit", "-m", "Test")
+	test_helpers.PerformCmd(t, repos.local, "git", "add", "--all")
+	test_helpers.PerformCmd(t, repos.local, "git", "commit", "-m", "Test")
 
 	assertState(t, repos.local, Ahead)
 	performUpdate(t, repos.local)
@@ -199,9 +186,9 @@ func TestGoGit_UpdateSync(t *testing.T) {
 	defer cleanupRepos(repos)
 
 	test_helpers.WriteFile(t, repos.local, "test.md", "TestContent")
-	performCmd(t, repos.local, "git", "add", "--all")
-	performCmd(t, repos.local, "git", "commit", "-m", "Test")
-	performCmd(t, repos.local, "git", "push", "origin", "master", "-u")
+	test_helpers.PerformCmd(t, repos.local, "git", "add", "--all")
+	test_helpers.PerformCmd(t, repos.local, "git", "commit", "-m", "Test")
+	test_helpers.PerformCmd(t, repos.local, "git", "push", "origin", "master", "-u")
 
 	assertState(t, repos.local, Sync)
 	performUpdate(t, repos.local)
@@ -213,13 +200,11 @@ func TestGoGit_UpdateOutOfSync(t *testing.T) {
 	defer cleanupRepos(repos)
 
 	test_helpers.WriteFile(t, repos.local, "test.md", "TestContent")
-	performCmd(t, repos.local, "git", "add", "--all")
-	performCmd(t, repos.local, "git", "commit", "-m", "Test")
-	performCmd(t, repos.local, "git", "push", "origin", "master", "-u")
+	test_helpers.PerformCmd(t, repos.local, "git", "add", "--all")
+	test_helpers.PerformCmd(t, repos.local, "git", "commit", "-m", "Test")
+	test_helpers.PerformCmd(t, repos.local, "git", "push", "origin", "master", "-u")
 
-	test_helpers.WriteFile(t, repos.remote, "test.md", "UpdateFromRemote")
-	performCmd(t, repos.remote, "git", "add", "--all")
-	performCmd(t, repos.remote, "git", "commit", "-m", "Test")
+	makeConflict(t, repos.remote)
 
 	assertState(t, repos.local, OutOfSync)
 	performUpdate(t, repos.local)
@@ -228,22 +213,19 @@ func TestGoGit_UpdateOutOfSync(t *testing.T) {
 
 func TestGoGit_UpdateFixConflict(t *testing.T) {
 	repos := setupRepos()
-	//defer cleanupRepos(repos)
+	defer cleanupRepos(repos)
 
 	test_helpers.WriteFile(t, repos.local, "test.md", "TestContent")
-	performCmd(t, repos.local, "git", "add", "--all")
-	performCmd(t, repos.local, "git", "commit", "-m", "Test local")
-	performCmd(t, repos.local, "git", "push", "origin", "master", "-u")
+	test_helpers.PerformCmd(t, repos.local, "git", "add", "--all")
+	test_helpers.PerformCmd(t, repos.local, "git", "commit", "-m", "Test local")
+	test_helpers.PerformCmd(t, repos.local, "git", "push", "origin", "master", "-u")
 
-	test_helpers.WriteFile(t, repos.remote, "test.md", "UpdateFromRemote")
-	performCmd(t, repos.remote, "git", "add", "--all")
-	performCmd(t, repos.remote, "git", "commit", "-m", "Test Remote")
-
+	makeConflict(t, repos.remote)
 	assertState(t, repos.local, OutOfSync)
 
 	test_helpers.WriteFile(t, repos.local, "test.md", "TestContent2")
-	performCmd(t, repos.local, "git", "add", "--all")
-	performCmd(t, repos.local, "git", "commit", "-m", "Test cause conflict")
+	test_helpers.PerformCmd(t, repos.local, "git", "add", "--all")
+	test_helpers.PerformCmd(t, repos.local, "git", "commit", "-m", "Test cause conflict")
 
 	assertState(t, repos.local, OutOfSync)
 	performUpdate(t, repos.local)
@@ -270,8 +252,8 @@ func TestGoGit_SyncAhead(t *testing.T) {
 	defer cleanupRepos(repos)
 
 	test_helpers.WriteFile(t, repos.local, "test.md", "TestContent")
-	performCmd(t, repos.local, "git", "add", "--all")
-	performCmd(t, repos.local, "git", "commit", "-m", "Test")
+	test_helpers.PerformCmd(t, repos.local, "git", "add", "--all")
+	test_helpers.PerformCmd(t, repos.local, "git", "commit", "-m", "Test")
 
 	assertState(t, repos.local, Ahead)
 	performSync(t, repos.local)
@@ -283,9 +265,9 @@ func TestGoGit_SyncSync(t *testing.T) {
 	defer cleanupRepos(repos)
 
 	test_helpers.WriteFile(t, repos.local, "test.md", "TestContent")
-	performCmd(t, repos.local, "git", "add", "--all")
-	performCmd(t, repos.local, "git", "commit", "-m", "Test")
-	performCmd(t, repos.local, "git", "push", "origin", "master", "-u")
+	test_helpers.PerformCmd(t, repos.local, "git", "add", "--all")
+	test_helpers.PerformCmd(t, repos.local, "git", "commit", "-m", "Test")
+	test_helpers.PerformCmd(t, repos.local, "git", "push", "origin", "master", "-u")
 
 	assertState(t, repos.local, Sync)
 	performSync(t, repos.local)
@@ -297,17 +279,26 @@ func TestGoGit_SyncOutOfSync(t *testing.T) {
 	defer cleanupRepos(repos)
 
 	test_helpers.WriteFile(t, repos.local, "test.md", "TestContent")
-	performCmd(t, repos.local, "git", "add", "--all")
-	performCmd(t, repos.local, "git", "commit", "-m", "Test")
-	performCmd(t, repos.local, "git", "push", "origin", "master", "-u")
+	test_helpers.PerformCmd(t, repos.local, "git", "add", "--all")
+	test_helpers.PerformCmd(t, repos.local, "git", "commit", "-m", "Test")
+	test_helpers.PerformCmd(t, repos.local, "git", "push", "origin", "master", "-u")
 
-	test_helpers.WriteFile(t, repos.remote, "test.md", "UpdateFromRemote")
-	performCmd(t, repos.remote, "git", "add", "--all")
-	performCmd(t, repos.remote, "git", "commit", "-m", "Test")
+	makeConflict(t, repos.remote)
 
 	assertState(t, repos.local, OutOfSync)
 	performSync(t, repos.local)
 	assertState(t, repos.local, Sync)
+}
+
+func makeConflict(t *testing.T, remote string) {
+	anotherLocal := test_helpers.SetupGitRepo("another_local", false)
+	test_helpers.SetupRemote(anotherLocal, remote)
+	test_helpers.PerformCmd(t, anotherLocal, "git", "fetch")
+	test_helpers.PerformCmd(t, anotherLocal, "git", "checkout", "master")
+	test_helpers.WriteFile(t, anotherLocal, "test.md", "Cause conflict")
+	test_helpers.PerformCmd(t, anotherLocal, "git", "add", "--all")
+	test_helpers.PerformCmd(t, anotherLocal, "git", "commit", "-m", "Test Remote")
+	test_helpers.PerformCmd(t, anotherLocal, "git", "push")
 }
 
 func TestGoGit_SyncFixConflict(t *testing.T) {
@@ -315,19 +306,17 @@ func TestGoGit_SyncFixConflict(t *testing.T) {
 	defer cleanupRepos(repos)
 
 	test_helpers.WriteFile(t, repos.local, "test.md", "TestContent")
-	performCmd(t, repos.local, "git", "add", "--all")
-	performCmd(t, repos.local, "git", "commit", "-m", "Test local")
-	performCmd(t, repos.local, "git", "push", "origin", "master", "-u")
+	test_helpers.PerformCmd(t, repos.local, "git", "add", "--all")
+	test_helpers.PerformCmd(t, repos.local, "git", "commit", "-m", "Test local")
+	test_helpers.PerformCmd(t, repos.local, "git", "push", "origin", "master", "-u")
 
-	test_helpers.WriteFile(t, repos.remote, "test.md", "UpdateFromRemote")
-	performCmd(t, repos.remote, "git", "add", "--all")
-	performCmd(t, repos.remote, "git", "commit", "-m", "Test Remote")
+	makeConflict(t, repos.remote)
 
 	assertState(t, repos.local, OutOfSync)
 
 	test_helpers.WriteFile(t, repos.local, "test.md", "TestContent2")
-	performCmd(t, repos.local, "git", "add", "--all")
-	performCmd(t, repos.local, "git", "commit", "-m", "Test cause conflict")
+	test_helpers.PerformCmd(t, repos.local, "git", "add", "--all")
+	test_helpers.PerformCmd(t, repos.local, "git", "commit", "-m", "Test cause conflict")
 
 	assertState(t, repos.local, OutOfSync)
 	performSync(t, repos.local)

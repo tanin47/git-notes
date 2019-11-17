@@ -13,7 +13,7 @@ type listener struct {
 	paths []string
 }
 
-func setup() (Watcher, *listener, string) {
+func setup() (*GitWatcher, *listener, string, chan string) {
 	var channel chan string = make(chan string)
 
 	var watcher = GitWatcher {
@@ -24,8 +24,7 @@ func setup() (Watcher, *listener, string) {
 		delayAfterFiringEvent: 1 * time.Second,
 	}
 
-	var path = test_helpers.SetupGitRepo("watcher")
-	watcher.Watch(path, channel)
+	var path = test_helpers.SetupGitRepo("watcher", false)
 
 	var listener listener
 
@@ -36,10 +35,10 @@ func setup() (Watcher, *listener, string) {
 		}
 	}()
 
-	return &watcher, &listener, path
+	return &watcher, &listener, path, channel
 }
 
-func cleanup(watcher Watcher, path string) {
+func cleanup(watcher *GitWatcher, path string) {
 	err := os.RemoveAll(path)
 	if err != nil {
 		log.Fatalf("Unable to remove %s. Error: %v", path, err)
@@ -48,53 +47,53 @@ func cleanup(watcher Watcher, path string) {
 	watcher.Stop()
 }
 
-func TestGitWatcher_CreateAndModify(t *testing.T) {
-	var _, listener, path = setup()
-	log.Println(path)
+func commit(t *testing.T, path string) {
+	test_helpers.PerformCmd(t, path, "git", "add", "--all")
+	test_helpers.PerformCmd(t, path, "git", "commit", "-m", "Test")
+}
 
-	//defer cleanup(watcher, path)
+func TestGitWatcher_Watch(t *testing.T) {
+	var watcher, listener, path, channel = setup()
+	defer cleanup(watcher, path)
+
+	watcher.Watch(path, channel)
 
 	assert.Equal(t, 0, len(listener.paths))
 
+	test_helpers.WriteFile(t, path, "test.md", "Watch")
+	time.Sleep(1 * time.Second)
+	assert.Greater(t, len(listener.paths), 0)
+	assert.Equal(t, path, listener.paths[0])
+}
+
+func TestGitWatcher_CreateAndModify(t *testing.T) {
+	var watcher, listener, path, channel = setup()
+	defer cleanup(watcher, path)
+
+	watcher.Check(path, channel)
+	assert.Equal(t, 0, len(listener.paths))
+
 	test_helpers.WriteFile(t, path, "test.md", "Hello")
-	time.Sleep(100 * time.Millisecond)
-	log.Println(listener.paths)
+	watcher.Check(path, channel)
+	assert.Equal(t, 1, len(listener.paths))
+	assert.Equal(t, path, listener.paths[0])
+
+	commit(t, path)
+
+	watcher.Check(path, channel)
 	assert.Equal(t, 1, len(listener.paths))
 	assert.Equal(t, path, listener.paths[0])
 
 	test_helpers.WriteFile(t, path, "test.md", "Hello2")
-	time.Sleep(1 * time.Millisecond)
+	watcher.Check(path, channel)
 	assert.Equal(t, 2, len(listener.paths))
 	assert.Equal(t, path, listener.paths[0])
 	assert.Equal(t, path, listener.paths[1])
 
+	commit(t, path)
+
 	// No change
 	test_helpers.WriteFile(t, path, "test.md", "Hello2")
-	time.Sleep(1 * time.Millisecond)
+	watcher.Check(path, channel)
 	assert.Equal(t, 2, len(listener.paths))
 }
-
-//func TestFsWatcher_Watch(t *testing.T) {
-//	var listener, path = setup()
-//	var currentCount = 0
-//
-//	// TODO: Add file
-//
-//	if listener.count <= currentCount {
-//		t.Errorf("Count should be more than %d", currentCount)
-//	}
-//	currentCount = listener.count
-//
-//	// TODO: Modify file
-//
-//	if listener.count <= currentCount {
-//		t.Errorf("Count should be more than %d", currentCount)
-//	}
-//	currentCount = listener.count
-//
-//	// TODO: Remove file
-//
-//	if listener.count <= currentCount {
-//		t.Errorf("Count should be more than %d", currentCount)
-//	}
-//}
