@@ -27,10 +27,10 @@ type Git interface {
 	Update(path string) error
 }
 
-type GoGit struct {
+type GitCmd struct {
 }
 
-func (g *GoGit) Sync(path string) error {
+func (g *GitCmd) Sync(path string) error {
 	state, err := g.GetState(path)
 	log.Printf("Starting state: %s", state)
 	if err != nil {
@@ -68,7 +68,7 @@ func runCmd(path string, command string, args... string) (string, error) {
 	return string(out), err
 }
 
-func (g *GoGit) IsDirty(path string) (bool, error) {
+func (g *GitCmd) IsDirty(path string) (bool, error) {
 	out, err := runCmd(path, "git", "status", "--porcelain")
 	if err != nil {
 		return false, fmt.Errorf("unable to get status. Error: %v", err)
@@ -78,7 +78,7 @@ func (g *GoGit) IsDirty(path string) (bool, error) {
 	return dirty, nil
 }
 
-func (g *GoGit) GetState(path string) (State, error) {
+func (g *GitCmd) GetState(path string) (State, error) {
 	log.Printf("Computing the state of %s", path)
 
 	dirty, err := g.IsDirty(path)
@@ -153,7 +153,7 @@ func GetStateAgainstRemote(path string) (State, error) {
 	return ParseStatusBranch(status)
 }
 
-func (g *GoGit) Update(path string) error {
+func (g *GitCmd) Update(path string) error {
 	state, err := g.GetState(path)
 
 	if err != nil {
@@ -215,6 +215,6 @@ func Commit(path string) error {
 	return cmd.Run()
 }
 
-func NewGoGit() GoGit {
-	return GoGit{}
+func NewGoGit() GitCmd {
+	return GitCmd{}
 }

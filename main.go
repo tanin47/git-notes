@@ -19,6 +19,9 @@ func main() {
 	var watcher = GitWatcher{
 		git:     &git,
 		running: false,
+		checkInterval: 10 * time.Second,
+		delayBeforeFiringEvent: 2 * time.Second,
+		delayAfterFiringEvent: 5 * time.Second,
 	}
 
 	if len(os.Args) < 2 {

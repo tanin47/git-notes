@@ -7,11 +7,15 @@ import (
 
 type Watcher interface {
 	Watch(path string, channel chan string)
+	Stop()
 }
 
 type GitWatcher struct {
 	git Git
 	running bool
+	checkInterval time.Duration
+	delayBeforeFiringEvent time.Duration
+	delayAfterFiringEvent time.Duration
 }
 
 func (f *GitWatcher) Stop() {
@@ -21,8 +25,8 @@ func (f *GitWatcher) Stop() {
 func (f *GitWatcher) Watch(path string, channel chan string) {
 	f.running = true
 	go func() {
-		for {
-			time.Sleep(10 * time.Second)
+		for f.running {
+			time.Sleep(f.checkInterval)
 			dirty, err := f.git.IsDirty(path)
 
 			if err != nil {
@@ -31,8 +35,9 @@ func (f *GitWatcher) Watch(path string, channel chan string) {
 
 			if dirty {
 				log.Printf("Changes have been detected.")
-				time.Sleep(3 * time.Second)
+				time.Sleep(f.delayBeforeFiringEvent)
 				channel <- path
+				time.Sleep(f.delayAfterFiringEvent)
 			}
 		}
 	}()
