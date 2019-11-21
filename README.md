@@ -23,6 +23,7 @@ I hope Git Notes hits all the notes for you like it does for me. Enjoy!
 Installation
 -------------
 
+0. Setup your personal note directory with Git. Make the master branch, commit, add `origin`, and `git push origin master -u`.
 1. Clone the repo
 2. Make the config file that contains the paths that will be synced automatically by Git Notes. See the example: `git-notes.json.example`
 3. Build the binary with `go build`
