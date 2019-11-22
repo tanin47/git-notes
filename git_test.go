@@ -1,9 +1,9 @@
 package main
 
 import (
-	"./test_helpers"
 	"fmt"
 	"github.com/stretchr/testify/assert"
+	"github.com/tanin47/git-notes/internal/test_helpers"
 	"log"
 	"os"
 	"testing"
