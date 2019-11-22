@@ -1,0 +1,15 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/golang:1.13.4
+
+    working_directory: /go/src/github.com/tanin47/git-notes
+    steps:
+      - checkout
+
+      - run: git config --global user.email "circlecicommitter@noemail.com"
+      - run: git config --global user.name "Circle CI committer"
+      - run: go get -v -t github.com/stretchr/testify
+      - run: go test --cover -coverprofile=coverage.txt -covermode=atomic
+      - run: bash <(curl -s https://codecov.io/bash)
