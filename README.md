@@ -1,5 +1,7 @@
-Personal notes synced on Git
-=============================
+Git Notes: personal notes synced through Git
+=============================================
+
+[![Gitter](https://badges.gitter.im/tanin-git-notes/community.svg)](https://gitter.im/tanin-git-notes/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
 ![Yet another note taking app](https://imgs.xkcd.com/comics/standards.png)
 
@@ -70,6 +72,10 @@ Read logs: use Console.app. Search for `logger`.
 ### Windows
 
 TBD
+
+### Android and iOS
+
+TBD: I want to build apps for this!
 
   
 Architecture
