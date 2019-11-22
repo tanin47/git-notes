@@ -1,7 +1,13 @@
-Git Notes: personal notes synced through Git
-=============================================
+Git Notes
+==========
+
+*Your personal notes synced through Git*
+
+Git Notes is in the alpha stage. I'd love to chat to users who want to use Git Notes. Please join our Gitter channel.
 
 [![Gitter](https://badges.gitter.im/tanin-git-notes/community.svg)](https://gitter.im/tanin-git-notes/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
+
+------
 
 ![Yet another note taking app](https://imgs.xkcd.com/comics/standards.png)
 
@@ -26,7 +32,7 @@ Installation
 -------------
 
 0. Setup your personal note directory with Git. Make the master branch, commit, add `origin`, and `git push origin master -u`.
-1. Clone the repo
+1. Clone `https://github.com/tanin47/git-notes`
 2. Make the config file that contains the paths that will be synced automatically by Git Notes. See the example: `git-notes.json.example`
 3. Build the binary with `go build`
 
