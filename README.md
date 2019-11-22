@@ -1,11 +1,14 @@
 Git Notes
 ==========
 
+[![CircleCI](https://circleci.com/gh/tanin47/git-notes.svg?style=svg)](https://circleci.com/gh/tanin47/git-notes)
+[![codecov](https://codecov.io/gh/tanin47/git-notes/branch/master/graph/badge.svg)](https://codecov.io/gh/tanin47/git-notes)
+[![Gitter](https://badges.gitter.im/tanin-git-notes/community.svg)](https://gitter.im/tanin-git-notes/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
+
 *Your personal notes synced through Git*
 
-Git Notes is in its alpha stage. I'd love to chat to users who want to use Git Notes. Please join our Gitter channel.
+Git Notes is in its alpha stage. I'd love to chat to users who want to use Git Notes. Please join [our Gitter channel](https://gitter.im/tanin-git-notes/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge).
 
-[![Gitter](https://badges.gitter.im/tanin-git-notes/community.svg)](https://gitter.im/tanin-git-notes/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
 ------
 
@@ -106,9 +109,6 @@ The file changes are detected by running `git status` every 10 seconds.
   
 Develop
 --------
-
-[![CircleCI](https://circleci.com/gh/tanin47/git-notes.svg?style=svg)](https://circleci.com/gh/tanin47/git-notes)
-[![codecov](https://codecov.io/gh/tanin47/git-notes/branch/master/graph/badge.svg)](https://codecov.io/gh/tanin47/git-notes)
 
 * `go build` to build the binary
 * `go run .` to run the application
