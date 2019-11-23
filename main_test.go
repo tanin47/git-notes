@@ -3,51 +3,38 @@ package main
 import (
 	"github.com/stretchr/testify/assert"
 	"testing"
-	"time"
 )
 
 func TestRun(t *testing.T) {
-	var watcher = MockWatcher{}
 	var git = MockGit{}
+	var watcher = MockWatcher{}
+	var configReader = MockConfigReader{}
+	var monitor = MockMonitor{}
 
-	Run("some-path", &watcher, &git)
+	Run(&git, &watcher, &configReader, &monitor)
 
-	assert.Equal(t, "some-path", watcher.repoPath)
-	assert.Equal(t, 1, git.Count)
-
-	watcher.channel <- watcher.repoPath
-
-	time.Sleep(1 * time.Second)
-	assert.Equal(t, 2, git.Count)
+	assert.Equal(t, []string{"some-path", "some-path-2"}, monitor.startMonitorPaths)
 }
 
-type MockWatcher struct {
-	repoPath string
-	channel  chan string
+type MockConfigReader struct {}
+
+func (m *MockConfigReader) Read(path string) (*Config, error) {
+	var config = &Config{
+		Repos: []string{"some-path", "some-path-2"},
+	}
+	return config, nil
 }
 
-func (m *MockWatcher) Watch(path string, channel chan string) {
-	m.repoPath = path
-	m.channel = channel
+type MockMonitor struct {
+	startMonitorPaths []string
 }
 
-type MockGit struct {
-	Count int
+func (m *MockMonitor) StartMonitoring(repoPath string, watcher Watcher, git Git) {
+	m.startMonitorPaths = append(m.startMonitorPaths, repoPath)
 }
 
-func (m *MockGit) IsDirty(path string) (bool, error) {
-	return false, nil
+func (m *MockMonitor) scheduleUpdate(repoPath string, channel chan string) {
 }
 
-func (m *MockGit) Sync(path string) error {
-	m.Count++
-	return nil
-}
 
-func (m *MockGit) Update(path string) error {
-	return nil
-}
 
-func (m *MockGit) GetState(path string) (State, error) {
-	return Sync, nil
-}
