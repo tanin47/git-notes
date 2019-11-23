@@ -11,10 +11,40 @@ import (
 	"testing"
 )
 
+type Repos struct {
+	Remote string
+	Local  string
+}
+
+func SetupRepos() Repos {
+	remote := SetupGitRepo("Remote", true)
+	local := SetupGitRepo("Local", false)
+
+	SetupRemote(local, remote)
+
+	log.Printf("Local: %s, Remote: %s", local, remote)
+	return Repos{
+		Remote: remote,
+		Local:  local,
+	}
+}
+
+func CleanupRepos(repos Repos) {
+	err := os.RemoveAll(repos.Remote)
+	if err != nil {
+		log.Fatalf("Unable to remove %s. Error: %v", repos.Remote, err)
+	}
+
+	err = os.RemoveAll(repos.Local)
+	if err != nil {
+		log.Fatalf("Unable to remove %s. Error: %v", repos.Local, err)
+	}
+}
+
 func SetupGitRepo(tag string, bare bool) string {
 	path, err := ioutil.TempDir("", fmt.Sprintf("git_test_%s", tag))
 	if err != nil {
-		log.Fatalf("Unable to create a temp dir for the remote repo")
+		log.Fatalf("Unable to create a temp dir for the Remote repo")
 	}
 
 	args := []string{"init"}
@@ -26,7 +56,7 @@ func SetupGitRepo(tag string, bare bool) string {
 	c.Dir = path
 	err = c.Run()
 	if err != nil {
-		log.Fatalf("Unable to init the remote repo")
+		log.Fatalf("Unable to init the repo. Path: %v, Error: %v", path, err)
 	}
 
 	return path
@@ -34,10 +64,12 @@ func SetupGitRepo(tag string, bare bool) string {
 
 func SetupRemote(local string, remote string) {
 	c := exec.Command("git", "remote", "add", "origin", remote)
+	c.Stderr = os.Stderr
+	c.Stdout = os.Stdout
 	c.Dir = local
 	err := c.Run()
 	if err != nil {
-		log.Fatalf("Unable to init the remote repo")
+		log.Fatalf("Unable to add origin. Error: %v", err)
 	}
 }
 

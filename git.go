@@ -107,6 +107,10 @@ func ParseStatusBranch(status string) (State, error) {
 	reg := regexp.MustCompile("## master(\\.\\.\\.origin\\/master *(\\[(ahead|behind) *[0-9]+ *(, *behind *[0-9]+)? *])?)?")
 	matches := reg.FindAllStringSubmatch(status, -1)
 
+	if len(matches) == 0 {
+		return Error, fmt.Errorf("unable to parse status: %v", status)
+	}
+
 	groups := matches[0]
 	if groups[0] == "" {
 		return Error, fmt.Errorf("unable to parse status: %v", status)
