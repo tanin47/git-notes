@@ -12,23 +12,14 @@ Git Notes is in its alpha stage. I'd love to chat to users who want to use Git N
 
 ------
 
-![Yet another note taking app](https://imgs.xkcd.com/comics/standards.png)
+Git Notes is a locally installed app that detects changes in a Git repo and push the changes immmediately to Github, Gitlab, or your own Git host. Here are the advantages:
 
-Almost all of the note taking apps are lacking in certain aspects.
+* You can use your fav editor like Vim, Emacs, Sublime, or Atom.
+* Your notes are more permanent. When was the last time you deleted a git repo? I don't remember mine either. Storing Github is how you're able to keep your several-year-old notes.
+* Your notes are versioned by Git.
+* Conflicts are handled intuitively for programmers. You see the git-style conflict text in your notes.
 
-Some lacks versioning. Some doesn't feel like my fav editor. Some lacks of a good way to resolve conflicts. Some lacks visibility and permanence.
-
-Once you read the above disadvantages above, you probably realise that Git is a perfect building block for an ideal note taking app.
-
-You can store your notes (and its history) on Github or Gitlab, which offers good degrees of visibility and permanence. You can use an editor of your choice like Vim, Emacs, Sublime, or Atom.
-
-The only problem with using Git is that your notes aren't synced automatically in real time, and that's exactly what Git notes mainly does.
-
-Git Notes runs as a background process. It detects file changes, immediately commit, and push. Git Notes also does pull at the startup and every hour.
-
-Conflicts are handled in an intuitive way to programmers. Git Notes simply commit and push the git-style conflict text. You would see the conflict in the format that you, as a programmer, are already familiar with.
-
-I hope Git Notes hits all the notes for you like it does for me. Enjoy!
+I hope Git Notes hits all the notes for you as it does for me. Enjoy!
 
   
 Installation
