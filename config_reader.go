@@ -6,7 +6,7 @@ import (
 )
 
 type Config struct {
-	Repos []string `json:"repos"`
+	Repos []string `json:"Repos"`
 }
 
 type ConfigReader interface {

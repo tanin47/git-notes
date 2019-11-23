@@ -7,6 +7,8 @@ import (
 	"time"
 )
 
+var Running = true
+
 func main() {
 	log.Println("Git Notes is starting...")
 
@@ -24,7 +26,10 @@ func main() {
 	}
 
 	Run(&git, &watcher, &configReader, &gitRepoMonitor)
-	select {}
+
+	for Running {
+		time.Sleep(1 * time.Second)
+	}
 }
 
 func Run(git Git, watcher Watcher, configReader ConfigReader, monitor PathMonitor) {
