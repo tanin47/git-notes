@@ -18,7 +18,7 @@ Almost all of the note taking apps are lacking in certain aspects.
 
 Some lacks versioning. Some doesn't feel like my fav editor. Some lacks of a good way to resolve conflicts. Some lacks visibility and permanence.
 
-Once you read the above disadvantages above, you probably realise that Git is a perfect building block for this perfect note taking app.
+Once you read the above disadvantages above, you probably realise that Git is a perfect building block for an ideal note taking app.
 
 You can store your notes (and its history) on Github or Gitlab, which offers good degrees of visibility and permanence. You can use an editor of your choice like Vim, Emacs, Sublime, or Atom.
 
