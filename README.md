@@ -57,9 +57,9 @@ Enable Git Notes to start at boot: `systemctl enable git-notes.service`
 
 Run: `systemctl start git-notes.service`
 
-Read logs: `journalctl -u git-notes.service --follow --user`
+Read logs: `journalctl -u git-notes.service --follow`
 
-Start after booting: `systemctl --user enable git-notes.service`
+Start after booting: `systemctl enable git-notes.service`
 
 
 ### Mac

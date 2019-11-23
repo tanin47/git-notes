@@ -8,9 +8,9 @@
 
     <key>ProgramArguments</key>
     <array>
-      <string>/Users/tanin/projects/git-notes/service_conf/mac.bash</string>
-      <string>/Users/tanin/projects/git-notes/git-notes</string>
-      <string>/Users/tanin/projects/git-notes/git-notes.json</string>
+      <string>/Users/tanin/go/src/github.com/tanin47/git-notes/service_conf/mac.bash</string>
+      <string>/Users/tanin/go/src/github.com/tanin47/git-notes/git-notes</string>
+      <string>/Users/tanin/go/src/github.com/tanin47/git-notes/git-notes.json</string>
     </array>
 
     <key>KeepAlive</key>
