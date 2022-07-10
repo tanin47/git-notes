@@ -2,18 +2,19 @@ package main
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/assert"
-	"github.com/tanin47/git-notes/internal/test_helpers"
 	"io/ioutil"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/tanin47/git-notes/internal/test_helpers"
 )
 
 func TestMainFunc(t *testing.T) {
 	Running = true
 
-	var git = NewGoGit()
+	git := NewGoGit()
 
 	repos := test_helpers.SetupRepos()
 	defer test_helpers.CleanupRepos(repos)
@@ -41,7 +42,7 @@ func TestMainFunc(t *testing.T) {
 		state, err := git.GetState(repos.Local)
 		assert.NoError(t, err)
 		return state == Sync
-	}, 15 * time.Second, 1 * time.Second)
+	}, 15*time.Second, 1*time.Second)
 
 	test_helpers.WriteFile(t, repos.Local, "test.md", "TestContent2")
 
@@ -53,16 +54,16 @@ func TestMainFunc(t *testing.T) {
 		state, err := git.GetState(repos.Local)
 		assert.NoError(t, err)
 		return state == Sync
-	}, 15 * time.Second, 1 * time.Second)
+	}, 15*time.Second, 1*time.Second)
 
 	Running = false
 }
 
 func TestRun(t *testing.T) {
-	var git = MockGit{}
-	var watcher = MockWatcher{}
-	var configReader = MockConfigReader{}
-	var monitor = MockMonitor{}
+	git := MockGit{}
+	watcher := MockWatcher{}
+	configReader := MockConfigReader{}
+	monitor := MockMonitor{}
 
 	oldArgs := os.Args
 	os.Args = []string{"app", "some-git-notes.json"}
@@ -80,7 +81,7 @@ type MockConfigReader struct {
 
 func (m *MockConfigReader) Read(path string) (*Config, error) {
 	m.readPath = path
-	var config = &Config{
+	config := &Config{
 		Repos: []string{"some-path", "some-path-2"},
 	}
 	return config, nil

@@ -22,7 +22,7 @@ func (g *GitRepoMonitor) scheduleUpdate(repoPath string, channel chan string) {
 }
 
 func (g *GitRepoMonitor) StartMonitoring(repoPath string, watcher Watcher, git Git) {
-	var channel = make(chan string)
+	channel := make(chan string)
 	err := git.Sync(repoPath)
 	if err != nil {
 		log.Printf("Syncing failed. Err: %v", err)

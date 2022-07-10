@@ -1,12 +1,13 @@
 package main
 
 import (
-	"github.com/stretchr/testify/assert"
-	"github.com/tanin47/git-notes/internal/test_helpers"
 	"log"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/tanin47/git-notes/internal/test_helpers"
 )
 
 type listener struct {
@@ -16,21 +17,21 @@ type listener struct {
 func setup() (*GitWatcher, *listener, string, chan string) {
 	var channel chan string = make(chan string)
 
-	var watcher = GitWatcher {
-		git: &GitCmd{},
-		running: false,
-		checkInterval: 10 * time.Millisecond,
+	watcher := GitWatcher{
+		git:                    &GitCmd{},
+		running:                false,
+		checkInterval:          10 * time.Millisecond,
 		delayBeforeFiringEvent: 0,
-		delayAfterFiringEvent: 1 * time.Second,
+		delayAfterFiringEvent:  1 * time.Second,
 	}
 
-	var path = test_helpers.SetupGitRepo("watcher", false)
+	path := test_helpers.SetupGitRepo("watcher", false)
 
 	var listener listener
 
 	go func() {
 		for {
-			path = <- channel
+			path = <-channel
 			listener.paths = append(listener.paths, path)
 		}
 	}()
@@ -53,7 +54,7 @@ func commit(t *testing.T, path string) {
 }
 
 func TestGitWatcher_Watch(t *testing.T) {
-	var watcher, listener, path, channel = setup()
+	watcher, listener, path, channel := setup()
 	defer cleanup(watcher, path)
 
 	watcher.Watch(path, channel)
@@ -67,7 +68,7 @@ func TestGitWatcher_Watch(t *testing.T) {
 }
 
 func TestGitWatcher_CreateAndModify(t *testing.T) {
-	var watcher, listener, path, channel = setup()
+	watcher, listener, path, channel := setup()
 	defer cleanup(watcher, path)
 
 	watcher.Check(path, channel)

@@ -1,17 +1,18 @@
 package main
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestGitRepoMonitor_StartMonitoring(t *testing.T) {
-	var gitRepoMonitor = GitRepoMonitor{
+	gitRepoMonitor := GitRepoMonitor{
 		scheduledUpdateInterval: time.Minute,
 	}
-	var watcher = MockWatcher{}
-	var git = MockGit{}
+	watcher := MockWatcher{}
+	git := MockGit{}
 
 	gitRepoMonitor.StartMonitoring("some-path", &watcher, &git)
 
@@ -25,25 +26,25 @@ func TestGitRepoMonitor_StartMonitoring(t *testing.T) {
 }
 
 func TestGitRepoMonitor_StartMonitoringAutomaticScheduleUpdate(t *testing.T) {
-	var gitRepoMonitor = GitRepoMonitor{
+	gitRepoMonitor := GitRepoMonitor{
 		scheduledUpdateInterval: 100 * time.Millisecond,
 	}
-	var watcher = MockWatcher{}
-	var git = MockGit{}
+	watcher := MockWatcher{}
+	git := MockGit{}
 
 	gitRepoMonitor.StartMonitoring("some-path", &watcher, &git)
 
 	assert.Eventually(t, func() bool {
 		return git.Count >= 2
-	}, 1 * time.Second, 10 * time.Millisecond)
+	}, 1*time.Second, 10*time.Millisecond)
 }
 
 func TestGitRepoMonitor_ScheduleUpdate(t *testing.T) {
-	var gitRepoMonitor = GitRepoMonitor{
+	gitRepoMonitor := GitRepoMonitor{
 		scheduledUpdateInterval: 100 * time.Millisecond,
 	}
 
-	var channel = make(chan string)
+	channel := make(chan string)
 	var path string
 
 	go func() {
@@ -54,7 +55,7 @@ func TestGitRepoMonitor_ScheduleUpdate(t *testing.T) {
 
 	assert.Eventually(t, func() bool {
 		return path == "some-path"
-	}, 1 * time.Second, 10 * time.Millisecond)
+	}, 1*time.Second, 10*time.Millisecond)
 }
 
 type MockWatcher struct {

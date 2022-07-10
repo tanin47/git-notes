@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	Error State = "error"
-	Dirty  State = "dirty"
+	Error     State = "error"
+	Dirty     State = "dirty"
 	Ahead     State = "ahead"
 	OutOfSync State = "out-of-sync"
 	Sync      State = "sync"
@@ -27,8 +27,7 @@ type Git interface {
 	Update(path string) error
 }
 
-type GitCmd struct {
-}
+type GitCmd struct{}
 
 func (g *GitCmd) Sync(path string) error {
 	state, err := g.GetState(path)
@@ -60,7 +59,7 @@ func (g *GitCmd) Sync(path string) error {
 	}
 }
 
-func runCmd(path string, command string, args... string) (string, error) {
+func runCmd(path string, command string, args ...string) (string, error) {
 	cmd := exec.Command(command, args...)
 	cmd.Dir = path
 
@@ -159,9 +158,8 @@ func GetStateAgainstRemote(path string) (State, error) {
 
 func (g *GitCmd) Update(path string) error {
 	state, err := g.GetState(path)
-
 	if err != nil {
-	  return err
+		return err
 	}
 
 	switch state {

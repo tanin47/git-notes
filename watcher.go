@@ -10,11 +10,11 @@ type Watcher interface {
 }
 
 type GitWatcher struct {
-	git Git
-	running bool
-	checkInterval time.Duration
+	git                    Git
+	running                bool
+	checkInterval          time.Duration
 	delayBeforeFiringEvent time.Duration
-	delayAfterFiringEvent time.Duration
+	delayAfterFiringEvent  time.Duration
 }
 
 func (f *GitWatcher) Stop() {
@@ -23,7 +23,6 @@ func (f *GitWatcher) Stop() {
 
 func (f *GitWatcher) Check(path string, channel chan string) {
 	dirty, err := f.git.IsDirty(path)
-
 	if err != nil {
 		log.Printf("Failed to get state. Error: %v", err)
 	}
@@ -44,5 +43,4 @@ func (f *GitWatcher) Watch(path string, channel chan string) {
 			f.Check(path, channel)
 		}
 	}()
-
 }
