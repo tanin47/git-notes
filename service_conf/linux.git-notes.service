@@ -1,10 +1,12 @@
 [Unit]
 Description=Git Notes
+After=network.target
 
 [Service]
 Type=simple
-User=tanin
-ExecStart=/home/tanin/go/src/github.com/tanin47/git-notes/git-notes /home/tanin/go/src/github.com/tanin47/git-notes/git-notes.json
+
+ExecStart=%h/go/bin/git-notes %h/.config/git-notes/git-notes.json
+
 Restart=always
 RestartSec=60
 
