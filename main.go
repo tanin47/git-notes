@@ -10,18 +10,25 @@ import (
 var Running = true
 
 func main() {
+	if len(os.Args) == 2 && os.Args[1] == "--service" {
+		log.Println("Git Notes start creating service...")
+		makeService()
+		makeConfig()
+		os.Exit(0)
+	}
+
 	log.Println("Git Notes is starting...")
 
-	var git = NewGoGit()
-	var watcher = GitWatcher{
-		git:     &git,
-		running: false,
-		checkInterval: 10 * time.Second,
+	git := NewGoGit()
+	watcher := GitWatcher{
+		git:                    &git,
+		running:                false,
+		checkInterval:          10 * time.Second,
 		delayBeforeFiringEvent: 2 * time.Second,
-		delayAfterFiringEvent: 5 * time.Second,
+		delayAfterFiringEvent:  5 * time.Second,
 	}
-	var configReader = JsonConfigReader{}
-	var gitRepoMonitor = GitRepoMonitor{
+	configReader := JsonConfigReader{}
+	gitRepoMonitor := GitRepoMonitor{
 		scheduledUpdateInterval: 5 * time.Minute,
 	}
 
@@ -38,7 +45,6 @@ func Run(git Git, watcher Watcher, configReader ConfigReader, monitor PathMonito
 	}
 	configPath := os.Args[1]
 	config, err := configReader.Read(configPath)
-
 	if err != nil {
 		log.Fatalf("Unable to read the config file. Err: %v", err)
 	}
@@ -48,4 +54,3 @@ func Run(git Git, watcher Watcher, configReader ConfigReader, monitor PathMonito
 		monitor.StartMonitoring(repoPath, watcher, git)
 	}
 }
-

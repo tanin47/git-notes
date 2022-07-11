@@ -2,13 +2,13 @@ package main
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/assert"
-	"github.com/tanin47/git-notes/internal/test_helpers"
 	"log"
 	"os"
 	"testing"
-)
 
+	"github.com/stretchr/testify/assert"
+	"github.com/tanin47/git-notes/internal/test_helpers"
+)
 
 func assertState(t *testing.T, path string, expectedState State) {
 	gogit := GitCmd{}
@@ -293,4 +293,3 @@ func TestGoGit_SyncFixConflict(t *testing.T) {
 	performSync(t, repos.Local)
 	assertState(t, repos.Local, Sync)
 }
-

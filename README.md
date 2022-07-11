@@ -26,31 +26,31 @@ Installation
 -------------
 
 0. Setup your personal note directory with Git. Make the master branch, commit, add `origin`, and `git push origin master -u`.
-1. Clone `https://github.com/tanin47/git-notes` to `$GOPATH/src/github.com/tanin47/git-notes`. If your `GOPATH` is empty, maybe you might want to use `~/go`. 
+1. Install with `go install https://github.com/tanin47/git-notes@latest`
 2. Make the config file that contains the paths that will be synced automatically by Git Notes. See the example: `git-notes.json.example`
-3. Build the binary with `go build *.go`
+	It can be found in `~/go/pkg/mod/github.com/tanin47/git-notes@{version with hash will be here}/`
 
-The binary will be built as `git-notes` in the root dir. 
+The binary can be found as `git-notes` in the `~/go/bin`. (Or more accurate to say, in `$(go env GOBIN)` or even `$(go env GOPATH)/bin`)
 
 You can run it by: `git-notes [your-config-file]`.
+Probably you need to add next string to you `~/.profile`.
+``` sh
+export PATH=$(go env GOBIN):$PATH
+```
+And set GOBIN with `go env -w GOBIN=$(go env GOPATH)/bin`
 
 To make Git Notes run at the startup and in the background, please follow the specific platform instruction below:
 
-### Ubuntu
+### Linux
 
-Move `./service_conf/linux.git-notes.service` to `/etc/systemd/system/git-notes.service`
+Launch `git-notes --service`
+This will add service file `~/.config/systemd/user/git-notes.service` and default config file in `~/.config/git-notes/git-notes.json`
 
-Modify `/etc/systemd/user/git-notes.service` to use the binary that you built above with and your config file.
+Enable Git Notes to start at boot: `systemctl --user enable git-notes.service`
 
-Reload service file after moving: `systemctl daemon-reload`
+Run: `systemctl --user start git-notes.service`
 
-Enable Git Notes to start at boot: `systemctl enable git-notes.service`
-
-Run: `systemctl start git-notes.service`
-
-Read logs: `journalctl -u git-notes.service --follow`
-
-Start after booting: `systemctl enable git-notes.service`
+Read logs: `journalctl --user -u git-notes.service --follow`
 
 
 ### Mac
