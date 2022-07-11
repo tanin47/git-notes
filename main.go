@@ -10,6 +10,13 @@ import (
 var Running = true
 
 func main() {
+	if len(os.Args) == 2 && os.Args[1] == "--service" {
+		log.Println("Git Notes start creating service...")
+		makeService()
+		makeConfig()
+		os.Exit(0)
+	}
+
 	log.Println("Git Notes is starting...")
 
 	var git = NewGoGit()

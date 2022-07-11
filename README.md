@@ -43,10 +43,8 @@ To make Git Notes run at the startup and in the background, please follow the sp
 
 ### Linux
 
-Move `./service_conf/linux.git-notes.service` to `~/.config/systemd/user/git-notes.service`
-And config file to `~/.config/git-notes/git-notes.json`
-
-Reload service file after moving: `systemctl --user daemon-reload`
+Launch `git-notes --service`
+This will add service file `~/.config/systemd/user/git-notes.service` and default config file in `~/.config/git-notes/git-notes.json`
 
 Enable Git Notes to start at boot: `systemctl --user enable git-notes.service`
 
