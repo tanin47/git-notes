@@ -28,7 +28,7 @@ Installation
 0. Setup your personal note directory with Git. Make the master branch, commit, add `origin`, and `git push origin master -u`.
 1. Clone `https://github.com/tanin47/git-notes` to `$GOPATH/src/github.com/tanin47/git-notes`. If your `GOPATH` is empty, maybe you might want to use `~/go`. 
 2. Make the config file that contains the paths that will be synced automatically by Git Notes. See the example: `git-notes.json.example`
-3. Build the binary with `go build *.go`
+3. Build the binary with `go mod init; go build`
 
 The binary will be built as `git-notes` in the root dir. 
 
